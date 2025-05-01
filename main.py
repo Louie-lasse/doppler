@@ -1,5 +1,25 @@
 import sys
 import os
+import random
+import time
+
+os.environ["PYGAME_HIDE_SUPPORT_PROMPT"] = "1"
+import pygame
+
+def random_distribution(r):
+    """
+    Generate a random number based on a normal distribution.
+    :param r: The randomness factor (0 = no randomness, 1 = maximum randomness).
+    :return: A random number between 0 and 1.
+    """
+    if r <= 0:
+        return 1 / 2
+    elif r >= 1:
+        return random.uniform(0, 1)
+    else:
+        std_dev = (1 / 2) * r
+        val = random.gauss(1 / 2, std_dev)
+        return max(0, min(1, val))
 
 def main(file, frequency, r_factor):
     """
@@ -10,30 +30,46 @@ def main(file, frequency, r_factor):
     r_factor: The randomness of the frequency.
     :return: None
     """
-    pass
+    if not os.path.exists(file):
+        print(f"File {file} does not exist.")
+        sys.exit(1)
+
+    time_between_sounds = 3600 * 2 / frequency
+
+    while True:
+        pygame.mixer.music.load(file)
+        pygame.mixer.music.play()
+        while pygame.mixer.music.get_busy():
+            time.sleep(0.1)   
+        time.sleep(time_between_sounds * random_distribution(r_factor))
 
 def get_file():
     """
     Get the sound file from the user.
     :return: The path to the sound file.
     """
-    if len(sys.argv) > 1:
-        return sys.argv[1]
 
     soundboard_dir = os.path.join(os.path.dirname(__file__), "soundboard")
+
+    if len(sys.argv) > 1:
+        return os.path.join(soundboard_dir, sys.argv[1])
+
     if not os.path.exists(soundboard_dir):
         os.makedirs(soundboard_dir)
     files = [f for f in os.listdir(soundboard_dir)
              if os.path.isfile(os.path.join(soundboard_dir, f))
-             and f.lower().endswith(('.wav', '.mp3', '.ogg'))]
+             and f.lower().endswith(('.wav', '.mp3', '.ogg'))
+            ]
     if not files:
         print("No sound files found in the soundboard directory.")
         sys.exit(1)
-    files.sort(lambda x: x.lower())
+    files.sort(key=lambda x: x.lower())
     print("Available sound files:")
     for i, f in enumerate(files):
         print(f"{i + 1}: {f}")
-    i = input("Please provide a sound file: ")
+    i = input("Please provide a sound file"+
+        (f" (1-{len(files)})" if len(files) > 1 else "") +
+        ": ")
     try:
         i = int(i) - 1
         if i < 0 or i >= len(files):
@@ -95,6 +131,7 @@ def get_r_factor():
 
 
 if __name__ == "__main__":
+    pygame.mixer.init()
     file = get_file()
     frequency = get_frequency()
     r_factor = get_r_factor()
