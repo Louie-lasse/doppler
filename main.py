@@ -132,7 +132,11 @@ def get_r_factor():
 
 if __name__ == "__main__":
     pygame.mixer.init()
-    file = get_file()
-    frequency = get_frequency()
-    r_factor = get_r_factor()
-    main(file, frequency, r_factor)
+    try:
+        file = get_file()
+        frequency = get_frequency()
+        r_factor = get_r_factor()
+        print("Press Ctrl+C to stop.")
+        main(file, frequency, r_factor)
+    except KeyboardInterrupt:
+        print("\nClosing down.")
